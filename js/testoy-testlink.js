@@ -1,29 +1,31 @@
-function getTestCaseIds(){
+function getTestCaseResultMap(){
     element = document.getElementById('statusTableBody');
     count = element.childElementCount;
-    var arr = [];
+    var id_status_map = new Map();
     for(var i=0; i<count; i++){
-       full_name = element.children[i].getElementsByTagName('td')[0].innerHTML;
+        var childNode = element.children[i];
+        full_name = childNode.getElementsByTagName('td')[0].innerHTML;
         regx = /^PLT\d+/gi;
         match_ret = full_name.match(regx);
         if(match_ret){
-            arr.push(match_ret[0]);
+            case_status = childNode.getAttribute('style')? 'f' : 'p';
+            id_status_map.set(match_ret[0], case_status);
         }
     }
-    var ret = arr.map(function(key){return key.replace(/PLT/, 'PLT#-')});
-    return ret;
+    return id_status_map;
 }
 
-function consistXmlBody(idArr){
+
+function consistXmlBody(map){
     doc = document.implementation.createDocument("", "", null);
 
     var resultsNode = doc.createElement('results');
 
-    for(var i=0; i<idArr.length; i++){
+    for(var [key, value] of map.entries()){
         var testCaseNode = doc.createElement('testcase');
-        testCaseNode.setAttribute('external_id', idArr[i]);
+        testCaseNode.setAttribute('external_id', key);
         var resultNode = doc.createElement('result');
-        var resultText = doc.createTextNode('p');
+        var resultText = doc.createTextNode(value);
         resultNode.appendChild(resultText);
         var noteNode = doc.createElement('notes');
         testCaseNode.appendChild(resultNode);
@@ -84,9 +86,9 @@ function downloadXmlFile(xmlContent){
 
 
 //Step 1. get test case id and status 
-var case_ids = getTestCaseIds();
+var retMap = getTestCaseResultMap();
 //Step 2. generate xml string
-var xmlString = consistXmlBody(case_ids);
+var xmlString = consistXmlBody(retMap);
 xmlString = getXmlStringContent(xmlString);
 xmlString = formatXml(xmlString);
 //Step 3. download this xml file
