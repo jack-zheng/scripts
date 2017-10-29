@@ -1,5 +1,29 @@
+// ==UserScript==
+// @name         Export Testlink report
+// @namespace    http://tampermonkey.net/
+// @version      0.1
+// @description  this script is used to easy your way to export run result on Testoy/ARP page
+// @author       Jack Zheng
+// @match        http://testoy.mo.sap.corp:8080/testoy/status/*
+// @grant        GM_registerMenuCommand
+// @grant        GM_download
+// ==/UserScript==
+
+GM_registerMenuCommand('Export Report For TestLink', main);
+
+// define a judge key of 'testoy' nev
+var testoy_key = "testoy";
+
 function getTestCaseResultMap(){
-    element = document.getElementById('statusTableBody');
+	if(window.location.host.includes(testoy_key)){
+		return getTestoyCaseResultMap();
+	}else{
+		return getARPCaseResultMap();
+	}
+}
+
+function getTestoyCaseResultMap(){
+	element = document.getElementById('statusTableBody');
     count = element.childElementCount;
     var id_status_map = new Map();
     for(var i=0; i<count; i++){
@@ -13,6 +37,10 @@ function getTestCaseResultMap(){
         }
     }
     return id_status_map;
+}
+
+function getARPCaseResultMap(){
+	return id_status_map;
 }
 
 
@@ -77,10 +105,11 @@ function formatXml(xml) {
 
 function downloadXmlFile(xmlContent){
     var encodedUri = encodeURI(xmlContent);
+    GM_download(encodedUri, "export.xml");
     var link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "my_data2.xml");
-    document.body.appendChild(link);
+	link.setAttribute("download", window.location.host.split('.')[0] + "_testlink.xml");        
+	document.body.appendChild(link);
     link.click();
 }
 
@@ -94,3 +123,4 @@ function main(){
     //Step 3. download this xml file
     downloadXmlFile(xmlString);
 }
+
