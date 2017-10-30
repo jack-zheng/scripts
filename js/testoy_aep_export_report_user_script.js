@@ -5,8 +5,8 @@
 // @description  this script is used to easy your way to export run result on Testoy/ARP page
 // @author       Jack Zheng
 // @match        http://testoy.mo.sap.corp:8080/testoy/status/*
+// @match        http://autoarp.wdf.sap.corp:8080/cuanto/testRun/results/*
 // @grant        GM_registerMenuCommand
-// @grant        GM_download
 // ==/UserScript==
 
 GM_registerMenuCommand('Export Report For TestLink', main);
@@ -40,6 +40,20 @@ function getTestoyCaseResultMap(){
 }
 
 function getARPCaseResultMap(){
+	var id_status_map = new Map();
+	GM_xmlhttpRequest({
+	  method: "GET",
+	  url: "http://autoarp.wdf.sap.corp:8080/cuanto/testRun/outcomes/187893?format=json&filter=allFailuresAndSkips",
+	  onload: function(response) {
+	    var ret_string = response.responseText;
+	    var ret_arr = JSON.parse(ret_string);
+	    for(var i=0; i<ret_arr.length; i++){
+	    	var case_id = ret_arr[i].testlinkTestCaseId.replace(/^([a-zA-Z]+)/, "$1#-").toUpperCase();
+	    	var local_result = ret_arr[i].localResult ? 'p' : 'f';
+	    	id_status_map.set(case_id, local_result);
+	    }
+	  }
+	});
 	return id_status_map;
 }
 
