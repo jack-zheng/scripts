@@ -13,6 +13,8 @@ GM_registerMenuCommand('Export Report For TestLink', main);
 
 // define a judge key of 'testoy' nev
 var testoy_key = "testoy";
+var url_prefix = "http://autoarp.wdf.sap.corp:8080/cuanto/testRun/outcomes/";
+var url_subfix = "?format=json&filter=allFailuresAndSkips"
 
 function getTestCaseResultMap(){
 	if(window.location.host.includes(testoy_key)){
@@ -33,7 +35,7 @@ function getTestoyCaseResultMap(){
         match_ret = full_name.match(regx);
         if(match_ret){
             case_status = childNode.getAttribute('style')? 'f' : 'p';
-            id_status_map.set(match_ret[0], case_status);
+            id_status_map.set(match_ret[0].replace(/PLT/, "PLT#-"), case_status);
         }
     }
     return id_status_map;
@@ -41,19 +43,21 @@ function getTestoyCaseResultMap(){
 
 function getARPCaseResultMap(){
 	var id_status_map = new Map();
-	GM_xmlhttpRequest({
-	  method: "GET",
-	  url: "http://autoarp.wdf.sap.corp:8080/cuanto/testRun/outcomes/187893?format=json&filter=allFailuresAndSkips",
-	  onload: function(response) {
-	    var ret_string = response.responseText;
-	    var ret_arr = JSON.parse(ret_string);
-	    for(var i=0; i<ret_arr.length; i++){
-	    	var case_id = ret_arr[i].testlinkTestCaseId.replace(/^([a-zA-Z]+)/, "$1#-").toUpperCase();
-	    	var local_result = ret_arr[i].localResult ? 'p' : 'f';
-	    	id_status_map.set(case_id, local_result);
-	    }
-	  }
-	});
+    var xmlHttp = new XMLHttpRequest();
+    var arr = document.URL.splite('/');
+    var job_id = arr[arr.size()-1];
+    var request_url = url_prefix + job_id + url_subfix;
+    xmlHttp.open("GET", request_url, false);
+	xmlHttp.send(null);
+    var ret_json = JSON.parse(xmlHttp.responseText);
+    var case_arr = ret_json.testOutcomes
+    for(var i=0; i<case_arr.length; i++)
+    {   
+        var is_local_pass = case_arr[i].localResult ? "p" : "f";
+        var case_id = case_arr[i].testlinkTestCaseId.replace(/plt/, "PLT#-");
+        console.log("id: " + case_id + " status: " + is_local_pass);
+        id_status_map.set(case_id, is_local_pass);
+    }
 	return id_status_map;
 }
 
