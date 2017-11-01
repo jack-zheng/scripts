@@ -1,62 +1,52 @@
 // ==UserScript==
-// @name         Export Testlink report
+// @name         Is_Case_Recorded
 // @namespace    http://tampermonkey.net/
 // @version      0.1
-// @description  this script is used to easy your way to export run result on Testoy/ARP page
+// @description  this script will send request to check if test case recorded in Capillary
 // @author       Jack Zheng
 // @match        http://testoy.mo.sap.corp:8080/testoy/status/*
-// @match        http://autoarp.wdf.sap.corp:8080/cuanto/testRun/results/*
 // @grant        GM_registerMenuCommand
+// @grant	     GM_xmlhttpRequest
 // ==/UserScript==
 
-GM_registerMenuCommand('Export Report For TestLink', main);
+GM_registerMenuCommand('Is Case Recorded', main);
 
-// define a judge key of 'testoy' nev
-var testoy_key = "testoy";
-
-function getTestCaseResultMap(){
-	if(window.location.host.includes(testoy_key)){
-		return getTestoyCaseResultMap();
-	}else{
-		return getARPCaseResultMap();
-	}
-}
+var capillaryReqeustUrl = "http://capillary.mo.sap.corp:8080/api/v1/testcases/by-case-id?mode=intelligent&caseIds=";
 
 function getTestoyCaseResultMap(){
 	element = document.getElementById('statusTableBody');
     count = element.childElementCount;
-    var id_status_map = new Map();
+    var id_exit_map = new Map();
     for(var i=0; i<count; i++){
         var childNode = element.children[i];
         full_name = childNode.getElementsByTagName('td')[0].innerHTML;
         regx = /^PLT\d+/gi;
         match_ret = full_name.match(regx);
         if(match_ret){
-            case_status = childNode.getAttribute('style')? 'f' : 'p';
-            id_status_map.set(match_ret[0], case_status);
+            case_id = match_ret[0].replace(/PLT/, "PLT#-");
+            if(isCaseRecorded(encodeURIComponent(case_id)))
+			{
+				// 't' for case record exit and f for not
+				id_exit_map.set(case_id, "t");
+			}else{
+				id_exit_map.set(case_id, "f");
+			}
         }
     }
-    return id_status_map;
+    return id_exit_map;
 }
 
-function getARPCaseResultMap(){
-	var id_status_map = new Map();
-	GM_xmlhttpRequest({
-	  method: "GET",
-	  url: "http://autoarp.wdf.sap.corp:8080/cuanto/testRun/outcomes/187893?format=json&filter=allFailuresAndSkips",
-	  onload: function(response) {
-	    var ret_string = response.responseText;
-	    var ret_arr = JSON.parse(ret_string);
-	    for(var i=0; i<ret_arr.length; i++){
-	    	var case_id = ret_arr[i].testlinkTestCaseId.replace(/^([a-zA-Z]+)/, "$1#-").toUpperCase();
-	    	var local_result = ret_arr[i].localResult ? 'p' : 'f';
-	    	id_status_map.set(case_id, local_result);
-	    }
-	  }
-	});
-	return id_status_map;
+function isCaseRecorded(case_id){
+	var requestUrl = capillaryReqeustUrl + case_id;
+	var xmlHttp = new XMLHttpRequest();
+    xmlHttp.open("GET", capillaryReqeustUrl + case_id, false);
+    xmlHttp.send(null);
+    if(xmlHttp.status == 200){
+        return "true";
+    }else{
+        return "";
+    }
 }
-
 
 function consistXmlBody(map){
     doc = document.implementation.createDocument("", "", null);
@@ -121,14 +111,14 @@ function downloadXmlFile(xmlContent){
     var encodedUri = encodeURI(xmlContent);
     var link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-	link.setAttribute("download", window.location.host.split('.')[0] + "_testlink.xml");        
+	link.setAttribute("download", window.location.host.split('.')[0] + "_is_case_recorded.xml");
 	document.body.appendChild(link);
     link.click();
 }
 
-function main(){ 
-    //Step 1. get test case id and status 
-    var retMap = getTestCaseResultMap();
+function main(){
+    //Step 1. get test case id and status
+    var retMap = getTestoyCaseResultMap();
     //Step 2. generate xml string
     var xmlString = consistXmlBody(retMap);
     xmlString = getXmlStringContent(xmlString);
