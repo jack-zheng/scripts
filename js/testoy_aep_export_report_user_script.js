@@ -7,6 +7,7 @@
 // @match        http://testoy.mo.sap.corp:8080/testoy/status/*
 // @match        http://autoarp.wdf.sap.corp:8080/cuanto/testRun/results/*
 // @grant        GM_registerMenuCommand
+// @require      http://code.jquery.com/jquery-1.12.4.min.js
 // ==/UserScript==
 
 GM_registerMenuCommand('Export Report For TestLink', main);
@@ -14,18 +15,18 @@ GM_registerMenuCommand('Export Report For TestLink', main);
 // define a judge key of 'testoy' nev
 var testoy_key = "testoy";
 var url_prefix = "http://autoarp.wdf.sap.corp:8080/cuanto/testRun/outcomes/";
-var url_subfix = "?format=json&filter=allFailuresAndSkips"
+var url_subfix = "?format=json&filter=allFailuresAndSkips";
 
 function getTestCaseResultMap(){
-	if(window.location.host.includes(testoy_key)){
-		return getTestoyCaseResultMap();
-	}else{
-		return getARPCaseResultMap();
-	}
+    if(window.location.host.includes(testoy_key)){
+        return getTestoyCaseResultMap();
+    }else{
+        return getARPCaseResultMap();
+    }
 }
 
 function getTestoyCaseResultMap(){
-	element = document.getElementById('statusTableBody');
+    element = document.getElementById('statusTableBody');
     count = element.childElementCount;
     var id_status_map = new Map();
     for(var i=0; i<count; i++){
@@ -42,23 +43,23 @@ function getTestoyCaseResultMap(){
 }
 
 function getARPCaseResultMap(){
-	var id_status_map = new Map();
+    var id_status_map = new Map();
     var xmlHttp = new XMLHttpRequest();
-    var arr = document.URL.splite('/');
+    var arr = document.URL.split('/');
     var job_id = arr[arr.size()-1];
     var request_url = url_prefix + job_id + url_subfix;
     xmlHttp.open("GET", request_url, false);
-	xmlHttp.send(null);
+    xmlHttp.send(null);
     var ret_json = JSON.parse(xmlHttp.responseText);
-    var case_arr = ret_json.testOutcomes
+    var case_arr = ret_json.testOutcomes;
     for(var i=0; i<case_arr.length; i++)
-    {   
-        var is_local_pass = case_arr[i].localResult ? "p" : "f";
+    {
+        var is_local_pass = (case_arr[i].localResult === "Pass") ? "p" : "f";
         var case_id = case_arr[i].testlinkTestCaseId.replace(/plt/, "PLT#-");
         console.log("id: " + case_id + " status: " + is_local_pass);
         id_status_map.set(case_id, is_local_pass);
     }
-	return id_status_map;
+    return id_status_map;
 }
 
 
@@ -125,13 +126,13 @@ function downloadXmlFile(xmlContent){
     var encodedUri = encodeURI(xmlContent);
     var link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-	link.setAttribute("download", window.location.host.split('.')[0] + "_testlink.xml");        
-	document.body.appendChild(link);
+    link.setAttribute("download", window.location.host.split('.')[0] + "_testlink.xml");
+    document.body.appendChild(link);
     link.click();
 }
 
-function main(){ 
-    //Step 1. get test case id and status 
+function main(){
+    //Step 1. get test case id and status
     var retMap = getTestCaseResultMap();
     //Step 2. generate xml string
     var xmlString = consistXmlBody(retMap);
