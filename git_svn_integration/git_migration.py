@@ -3,10 +3,14 @@ from git import Repo
 from os import walk
 from os.path import join
 import sqlite3
+from datetime import datetime
 
 repo = Repo(config.git_repo)
 
 def main():
+	# log start time
+	start = datetime.now()
+
 	# get case info that we need to insert into db
 	file_path = []
 	for root, dirs, files in walk(config.case_folder):
@@ -38,6 +42,9 @@ def main():
 	conn.close()
 	print('Finish migration!')
 
+	# log end time
+	end = datetime.now()
+	print('Time Comsume: %s' % (end - start).seconds)
 
 # insert record into db
 def build_sql(record):

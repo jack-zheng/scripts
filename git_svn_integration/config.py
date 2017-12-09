@@ -1,3 +1,3 @@
-db_path='/home/jack/gitStore/scripts/git_svn_integration/qray_case.db'
-git_repo='/home/jack/gitStore/scripts'
-case_folder='/home/jack/gitStore/scripts/js'
+db_path='/home/jack/gitStore/scripts/git_svn_integration/app.db'
+git_repo='/home/jack/gitStore/scripts/git_svn_integration/PLT-User'
+case_folder='/home/jack/gitStore/scripts/git_svn_integration/PLT-User/src/com/successfactors/test/qray/cases/plt/usermanagement'
