@@ -16,7 +16,7 @@ def insert_record_to_info():
     
     for dir, subdir, files in walk(config.svn_src):
             for file in files:
-                c.execute(build_svn_info_sql(file, join(dir, file)))
+                c.execute(build_svn_info_sql(file, join(dir, file).replace(config.svn_prefix, '.').replace('\\', '/')))
    
     conn.commit()
     conn.close()
