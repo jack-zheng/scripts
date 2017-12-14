@@ -12,7 +12,7 @@ def main():
     
     conn = sqlite3.connect(config.db_path)
     c = conn.cursor()
-    sql = "select entry_id, file_path from svn_files_info"
+    sql = '''select entry_id, file_path from svn_files_info'''
     c.execute(sql)
     rows = c.fetchall()
     
