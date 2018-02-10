@@ -2,7 +2,10 @@ import requests
 from requests.auth import HTTPBasicAuth
 import re
 import logging
+from write_to_xml import write_jenkins_result_to_file
 
+# define case id prefix
+id_prefix = "PLT"
 # define the regex to fetch case id from class name
 regx = r"PLT\d+"
 # define the status which means pass
@@ -20,12 +23,13 @@ suites = ret.json()['suites']
 # parse case name and case status
 # there are three kinds of status: PASS and FIXED means pass and FAILED means failed
 for test in suites:
+    # parse case id, finally we get some id like: PLT#-XXX
     regx_ret = re.findall(regx, test['name'])
     if not regx_ret:
         case_name = test['name'].split('.')[-1]
-        logging.warn('test case: %s not start with "PLT", skipped' % case_name)
+        logging.warn('test case: %s not start with "%s", skipped' % (case_name, id_prefix))
         continue
-    test_name = regx_ret[0]
+    test_name = regx_ret[0].replace(id_prefix, (id_prefix + "#-"))
     test_status = True
     cases = test['cases']
     
@@ -34,6 +38,7 @@ for test in suites:
         is_pass = case['status'] in pass_list
         test_status = test_status & is_pass
 
-    xml_list.append({test_name:test_status})
+    xml_list.append({"id": test_name,"status": test_status})
 
-    # xml generator: generateTestlinkReport(list, file_name) => result.xml
+# xml generator: generateTestlinkReport(list, file_name) => result.xml
+write_jenkins_result_to_file(xml_list)
