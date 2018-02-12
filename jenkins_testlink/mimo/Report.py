@@ -19,24 +19,19 @@ domain = "http://10.129.126.245:9090/job/jobname/start/testReport/api/json?prett
 auth_info = ['upadmin', 'Initial1']
 
 def exportxml(jobname, start, end=-1):
-    # if end num bigger then start, we calculate multiple times and get intersection
-    if end < start:
-        end = start
-    else:
-        logging.warn("Calculate Intersection")
-        
-    while (start <= end ):
-       url = domain.replace("jobname", jobname).replace("start", str(start))
-       tmp_list = fetchresult(url)
-       for sub in tmp_list:
-           if sub in 
-       start = start + 1
+	# if end num bigger then start, we calculate multiple times and get intersection
+	if end < start:
+		end = start
+	else: 
+		logging.warning("Calculate Intersection")
+	
+	while (start <= end):
+		url = domain.replace("jobname", jobname).replace("start", str(start))
+		xml_list = fetchresult(url)
+		start = start + 1
+	write_jenkins_result_to_file(xml_list)
 
-    # xml generator: generateTestlinkReport(list, file_name) => result.xml
-    write_jenkins_result_to_file(xml_list)
-
-
-"""ecapsulate method to fetch result
+""" encapsulate method to fetch result
 """
 def fetchresult(url):
     logging.warn("request url: %s" %url)
