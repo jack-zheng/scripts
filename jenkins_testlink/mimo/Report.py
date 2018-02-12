@@ -13,26 +13,33 @@ regx = r"PLT\d+"
 pass_list = ['PASSED', 'FIXED']
 # define a list to store test result, run_result[test01{name, status, count}]
 xml_list = []
-# define defaule domain of Jenkins server
+# define domain of Jenkins server
 domain = "http://10.129.126.245:9090/job/jobname/start/testReport/api/json?pretty=true"
 # define default auth username and password
 auth_info = ['upadmin', 'Initial1']
 
-def exportxml(jobname, start, end=-1):
-	# if end num bigger then start, we calculate multiple times and get intersection
-	if end < start:
-		end = start
-	else: 
-		logging.warning("Calculate Intersection")
-	
-	while (start <= end):
-		url = domain.replace("jobname", jobname).replace("start", str(start))
-		xml_list = fetchresult(url)
-		start = start + 1
-	write_jenkins_result_to_file(xml_list)
 
-""" encapsulate method to fetch result
-"""
+def exportxml(jobname, start, end=-1):
+    # if end number is bigger than start, calculate the intersection
+    if end < start:
+        end = start
+    else:
+        logging.warning("Calculate Intersection")
+
+    while start <= end:
+        url = domain.replace("jobname", jobname).replace("start", str(start))
+        tmp_list = fetchresult(url)
+        for sub in tmp_list:
+            if sub in xml_list:
+                target = [item for item in xml_list if item.id == sub.id][0]
+                target.count += 1
+            else:
+                xml_list.append(sub)
+        start += 1
+
+    write_jenkins_result_to_file(xml_list)
+
+# encapsulate method to fetch result
 def fetchresult(url):
     logging.warn("request url: %s" %url)
     authorize = HTTPBasicAuth(auth_info[0], auth_info[1])

@@ -1,4 +1,6 @@
 class TestCase:
+	count = 0
+	
 	def __init__(self, id, status=False):
 		self.id = id
 		self.status = status
